@@ -5,3 +5,4 @@ set(CMAKE_C_STANDARD 99)
 
 add_executable(Client Client/Client.c)
 add_executable(Server Server/Server.c)
+add_executable(Sockets test.c)

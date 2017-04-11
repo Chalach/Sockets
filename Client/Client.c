@@ -5,57 +5,57 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define Port 8888
+#define Port 8080
 
 int main(int argc , char *argv[]) {
     int clientSocket;
     struct sockaddr_in server;
-    char *message , server_reply[2000] = "";
+    char message[100];
 
-    //Socket erstellen
+    ///Socket erstellen
     clientSocket = socket(AF_INET , SOCK_STREAM , 0);
     if (clientSocket == -1) {
         perror("Socket konnte nicht erstellt werden");
     }
 
+    /// Struct definieren (IP, Protokoll, Port)
     server.sin_addr.s_addr = INADDR_ANY; //-> Es wird der localhost verwendet; auch möglich: inet_addr(IP-Adresse)
     server.sin_family = AF_INET;
     server.sin_port = htons(Port);
 
-    //Verbindung zum Server aufbauen
+    ///Verbindung zum Server aufbauen
     if (connect(clientSocket , (struct sockaddr *)&server , sizeof(server)) < 0) {
         perror("Verbindung zum Server fehlgeschlagen!");
         return 1;
     }
-
     puts("Verbindung hergestellt...");
 
-    //Nachricht an den Server schicken
-    message = "Hello World";
+    /// Nachrichten an den Server schicken; evtl. auch lesen (mehrfach)
+    while (1){
+        //read(clientSocket, server_reply, sizeof(server_reply));
+        puts("Message:");
+        fgets(message, sizeof(message), stdin);
+        write(clientSocket, message, strlen(message));
+        if (strncmp(message, "exit", 4) == 0){
+            break;
+        }
+    }
+
+    puts("Client beendet");
+    return 0;
+}
+
+/// Anwort vom Server erhalten
+void readSingleMessage(int clientSocket, char server_reply[2000]){
+    if(recv(clientSocket, server_reply , 2000 , 0) < 0) {
+        perror("Keine Antwort vom Server erhalten!");
+    }
+}
+///Nachricht an den Server schicken
+int writeSingleMessage(int clientSocket, char* message){
     if(send(clientSocket , message , strlen(message) , 0) < 0) {
         perror("Nachricht konnt nicht versendet werden!");
         return 1;
     }
-    puts("Nachricht versendet...");
-
-    //Anwort vom Server erhalten
-    if(recv(clientSocket, server_reply , 2000 , 0) < 0) {
-        perror("Keine Antwort vom Server erhalten!");
-    }
-
-    puts("ewkr");
-    while (1){
-        read(clientSocket, server_reply, 2000);
-        //fgets(message, sizeof(message), NULL);
-        write(clientSocket, message, strlen(message));
-        printf("Anwort: ");
-        puts(server_reply);
-        if (!strcmp(server_reply, "exit")){
-            break;
-        }
-    }
-    puts("dslf");
-
-    puts("Client beendet");
     return 0;
 }
