@@ -5,12 +5,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define Port 8888
+#define PORT 8888
 
 int main(int argc, char *argv[]){
     int serverSocket, new_socket, c;
     struct sockaddr_in server, client;
-    char *message;
+    char *message, server_reply[2000] = "";
 
     //Socket erstellen
     serverSocket = socket(AF_INET , SOCK_STREAM , 0);
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
     //Konfiguration
     server.sin_addr.s_addr = INADDR_ANY; //-> Es wird der localhost verwendet; auch möglich: inet_addr(IP-Adresse)
     server.sin_family = AF_INET;
-    server.sin_port = htons(Port);
+    server.sin_port = htons(PORT);
 
     //Socket einbinden
     if(bind(serverSocket,(struct sockaddr*)&server , sizeof(server)) < 0) {
@@ -29,8 +29,8 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
-    //Auf dem erstellten Port lauschen
-    listen(serverSocket, 3);
+    //Auf dem erstellten Port lauschen & Anzahl der der Clients in der Warteschlange
+    listen(serverSocket, 1);
 
     //Verbindung zulassen und antworten
     puts("Warten auf Verbindungen...");
@@ -43,7 +43,15 @@ int main(int argc, char *argv[]){
 
     //Verbindungsbestätigung schicken
     message = "Anfrage von Client erhalten...";
-    write(new_socket, message, strlen(message));
+
+    while (1){
+        write(new_socket, message, strlen(message));
+        read(new_socket, server_reply, 2000);
+        puts(server_reply);
+        if (!strcmp(server_reply, "exit")){
+            break;
+        }
+    }
 
     puts("Verbindung wurde akzeptiert!");
     return 0;

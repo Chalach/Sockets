@@ -10,7 +10,7 @@
 int main(int argc , char *argv[]) {
     int clientSocket;
     struct sockaddr_in server;
-    char *message , server_reply[2000];
+    char *message , server_reply[2000] = "";
 
     //Socket erstellen
     clientSocket = socket(AF_INET , SOCK_STREAM , 0);
@@ -42,9 +42,20 @@ int main(int argc , char *argv[]) {
     if(recv(clientSocket, server_reply , 2000 , 0) < 0) {
         perror("Keine Antwort vom Server erhalten!");
     }
-    read(clientSocket, server_reply, 2000);
-    puts(server_reply);
-    puts("Anwort erhalten...");
 
+    puts("ewkr");
+    while (1){
+        read(clientSocket, server_reply, 2000);
+        //fgets(message, sizeof(message), NULL);
+        write(clientSocket, message, strlen(message));
+        printf("Anwort: ");
+        puts(server_reply);
+        if (!strcmp(server_reply, "exit")){
+            break;
+        }
+    }
+    puts("dslf");
+
+    puts("Client beendet");
     return 0;
 }
