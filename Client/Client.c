@@ -35,13 +35,21 @@ int main(int argc , char *argv[]) {
         //read(clientSocket, server_reply, sizeof(server_reply));
         puts("Message:");
         fgets(message, sizeof(message), stdin);
+        for (int i = 0; i < 2000; ++i) {
+            if (message[i] == '\n'){
+                message[i] = '\0';
+                break;
+            }
+        }
+
         write(clientSocket, message, strlen(message));
-        if (strncmp(message, "exit", 4) == 0){
+        if (strcmp(message, "exit") == 0){
             break;
         }
     }
 
     puts("Client beendet");
+    close(clientSocket);
     return 0;
 }
 

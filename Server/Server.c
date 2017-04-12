@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
 
     /// Nachrichten vom Client lesen und bearbeiten
     while (1){
-        if (strncmp(server_reply, "exit", 4) == 0){
+        if (strcmp(server_reply, "exit") == 0){
             break;
         }
         //write(new_socket, message, strlen(message));
@@ -56,6 +56,8 @@ int main(int argc, char *argv[]){
     }
 
     puts("Verbindung wurde erfolgreich beendet!");
+    close(serverSocket);
+    close(new_socket);
     return 0;
 }
 
