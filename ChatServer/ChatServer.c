@@ -1,17 +1,20 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define PORT 8080
+void readSingleMessage(int*);
 
 int main(int argc, char *argv[]){
     int serverSocket, new_socket, c;
     struct sockaddr_in server, client;
-    //char* message;
     char server_reply[2000];
+    pthread_t pthread[5];
 
     /// Socket erstellen
     serverSocket = socket(AF_INET , SOCK_STREAM , 0);
@@ -31,23 +34,24 @@ int main(int argc, char *argv[]){
     }
 
     ///Auf dem erstellten Port lauschen & Anzahl der der Clients in der Warteschlange
-    listen(serverSocket, 1);
+    listen(serverSocket, 2);
 
     /// Verbindung zulassen und antworten
     puts("Warten auf Verbindungen...");
-    c = sizeof(struct sockaddr_in);
-    new_socket = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c);
-    if (new_socket < 0) {
-        perror("Anfrage verweigert!");
-        return 1;
+    while (1){
+        c = sizeof(struct sockaddr_in);
+        new_socket = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c);
+        if (new_socket < 0) {
+            perror("Anfrage verweigert!");
+            return 1;
+        }
+        int socket;
+        socket = new_socket;
+        pthread_create(pthread, NULL, (void*(*)(void*)) &readSingleMessage, &socket);
     }
-
-    /// Evtl. Antwortnachricht
-    //message = "Anfrage von Client erhalten...";
 
     /// Nachrichten vom Client lesen und bearbeiten
     while (1){
-        //write(new_socket, message, strlen(message));
         read(new_socket, server_reply, 2000);
         puts(server_reply);
 
@@ -67,4 +71,23 @@ int main(int argc, char *argv[]){
     close(serverSocket);
     close(new_socket);
     return 0;
+}
+
+/// Anwort vom Server erhalten
+void readSingleMessage(int* clientSocket){
+
+    char server_reply[2000];
+    int socket =(int) clientSocket;
+    while (1){
+        if(recv(socket, server_reply , 2000 , 0) < 0) {
+            perror("Keine Antwort vom Server erhalten!");
+        }
+        if (strcmp(server_reply, "exit") == 0){
+            break;
+        }
+        puts(server_reply);
+    }
+    close(socket);
+    free(clientSocket);
+    pthread_exit(NULL);
 }

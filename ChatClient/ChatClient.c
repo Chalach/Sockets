@@ -43,7 +43,7 @@ int main(int argc , char *argv[]) {
                 break;
             }
         }
-
+        //read(clientSocket, server_reply, 2000);
         write(clientSocket, message, strlen(message));
         if (strcmp(message, "exit") == 0){
             break;
