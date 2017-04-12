@@ -48,6 +48,7 @@ int main(int argc, char *argv[]){
         int socket;
         socket = new_socket;
         pthread_create(pthread, NULL, (void*(*)(void*)) &readSingleMessage, &socket);
+
     }
 
     /// Nachrichten vom Client lesen und bearbeiten
