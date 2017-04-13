@@ -5,6 +5,10 @@ set(CMAKE_C_STANDARD 99)
 
 add_executable(Client Client/Client.c)
 add_executable(Server Server/Server.c)
+
 add_executable(ChatClient ChatClient/ChatClient.c)
 add_executable(ChatServer ChatServer/ChatServer.c)
-add_executable(Sockets test.c)
+target_link_libraries(ChatServer -lpthread)
+
+add_executable(Test test.c)
+target_link_libraries(Test -lpthread)

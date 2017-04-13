@@ -8,7 +8,7 @@
 #include <pthread.h>
 
 #define PORT 8080
-void readSingleMessage(int*);
+void readSingleMessage(int);
 
 int main(int argc, char *argv[]){
     int serverSocket, new_socket, c;
@@ -45,10 +45,9 @@ int main(int argc, char *argv[]){
             perror("Anfrage verweigert!");
             return 1;
         }
-        int socket;
-        socket = new_socket;
-        pthread_create(pthread, NULL, (void*(*)(void*)) &readSingleMessage, &socket);
 
+        pthread_create(pthread, NULL, (void*(*)(void*)) &readSingleMessage, &socket);
+        pthread_join((pthread_t) pthread, NULL);
     }
 
     /// Nachrichten vom Client lesen und bearbeiten
@@ -75,20 +74,25 @@ int main(int argc, char *argv[]){
 }
 
 /// Anwort vom Server erhalten
-void readSingleMessage(int* clientSocket){
+void readSingleMessage(int clientSocket){
 
     char server_reply[2000];
-    int socket =(int) clientSocket;
+    puts("Get Message");
+    getchar();
     while (1){
-        if(recv(socket, server_reply , 2000 , 0) < 0) {
-            perror("Keine Antwort vom Server erhalten!");
-        }
+        read(clientSocket, server_reply, sizeof(server_reply));
+//        if(recv(socket, server_reply , 2000 , 0) < 0) {
+//            perror("Keine Antwort vom Server erhalten!");
+//        }
         if (strcmp(server_reply, "exit") == 0){
             break;
         }
         puts(server_reply);
+        puts("END FIRST LOOP");
+        getchar();
     }
-    close(socket);
-    free(clientSocket);
+    close(clientSocket);
+    //free(clientSocket);
+    puts("Thread closed");
     pthread_exit(NULL);
 }
