@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define Port 8080
+#define PORT 8080
 
 int main(int argc , char *argv[]) {
     int clientSocket;
@@ -21,7 +21,7 @@ int main(int argc , char *argv[]) {
     /// Struct definieren (IP, Protokoll, Port)
     server.sin_addr.s_addr = INADDR_ANY; //-> Es wird der localhost verwendet; auch möglich: inet_addr(IP-Adresse)
     server.sin_family = AF_INET;
-    server.sin_port = htons(Port);
+    server.sin_port = htons(PORT);
 
     ///Verbindung zum Server aufbauen
     if (connect(clientSocket , (struct sockaddr *)&server , sizeof(server)) < 0) {

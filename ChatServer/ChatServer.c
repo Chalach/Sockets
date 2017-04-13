@@ -8,13 +8,14 @@
 #include <pthread.h>
 
 #define PORT 8080
-void readSingleMessage(int);
+#define MAX_THREADS 5
+
+void *readSingleMessage(void *);
 
 int main(int argc, char *argv[]){
     int serverSocket, new_socket, c;
     struct sockaddr_in server, client;
-    char server_reply[2000];
-    pthread_t pthread[5];
+    pthread_t threads[MAX_THREADS];
 
     /// Socket erstellen
     serverSocket = socket(AF_INET , SOCK_STREAM , 0);
@@ -38,61 +39,45 @@ int main(int argc, char *argv[]){
 
     /// Verbindung zulassen und antworten
     puts("Warten auf Verbindungen...");
-    while (1){
+    for (int i = 0; i < MAX_THREADS; ++i) {
         c = sizeof(struct sockaddr_in);
         new_socket = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c);
         if (new_socket < 0) {
             perror("Anfrage verweigert!");
-            return 1;
-        }
-
-        pthread_create(pthread, NULL, (void*(*)(void*)) &readSingleMessage, &socket);
-        pthread_join((pthread_t) pthread, NULL);
-    }
-
-    /// Nachrichten vom Client lesen und bearbeiten
-    while (1){
-        read(new_socket, server_reply, 2000);
-        puts(server_reply);
-
-        if (strcmp(server_reply, "exit") == 0){
             break;
-        } else if (strcmp(server_reply, "ein") == 0){
-            puts("Raspi LED ON:");
-        } else if (strcmp(server_reply, "aus") == 0){
-            puts("Raspi LED OFF:");
-        } else if (strcmp(server_reply, "blick") == 0){
-            puts("Raspi LED BLINK:");
         }
+        pthread_create(&threads[i], NULL, readSingleMessage, (void *) new_socket);
     }
 
-    /// Programm, sowie Sockets schließen
-    puts("Verbindung wurde erfolgreich beendet!");
+    /// Threads, sowie Sockets schließen
+    for (int j = 0; j < MAX_THREADS; ++j){
+        pthread_join(threads[j], NULL);
+    }
+
     close(serverSocket);
-    close(new_socket);
+
+    puts("Verbindung wurde erfolgreich beendet!");
+
     return 0;
 }
 
 /// Anwort vom Server erhalten
-void readSingleMessage(int clientSocket){
+void *readSingleMessage(void *clientSocket){
+    int socket = (int) clientSocket;
+    char antwort[2000];
 
-    char server_reply[2000];
-    puts("Get Message");
-    getchar();
+    puts("Thread started");
     while (1){
-        read(clientSocket, server_reply, sizeof(server_reply));
-//        if(recv(socket, server_reply , 2000 , 0) < 0) {
-//            perror("Keine Antwort vom Server erhalten!");
-//        }
-        if (strcmp(server_reply, "exit") == 0){
+        printf("Client: ");
+        read(socket, antwort, sizeof(antwort));
+        printf("%s\n", antwort); //TODO Ausgabe fixen
+        if (strncmp(antwort, "exit", 4) == 0){
             break;
         }
-        puts(server_reply);
-        puts("END FIRST LOOP");
-        getchar();
     }
-    close(clientSocket);
-    //free(clientSocket);
+
+    close(socket);
     puts("Thread closed");
+
     pthread_exit(NULL);
 }
