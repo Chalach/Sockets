@@ -7,6 +7,7 @@ add_executable(Client Client/Client.c)
 add_executable(Server Server/Server.c)
 
 add_executable(ChatClient ChatClient/ChatClient.c)
+target_link_libraries(ChatClient -lpthread)
 add_executable(ChatServer ChatServer/ChatServer.c)
 target_link_libraries(ChatServer -lpthread)
 

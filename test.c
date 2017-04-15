@@ -12,7 +12,7 @@ void *print_char (void *ch) {
 }
 
 int main () {
-    char ch1='f';
+    char ch1='*';
     pthread_t threads[MAX_THREADS];
 
     /// Länge von Array bestimmen (Nur einmal im Code möglich)
