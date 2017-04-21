@@ -11,5 +11,7 @@ target_link_libraries(ChatClient -lpthread)
 add_executable(ChatServer ChatServer/ChatServer.c)
 target_link_libraries(ChatServer -lpthread)
 
-add_executable(Test test.c)
-target_link_libraries(Test -lpthread)
+add_executable(Thread Thread.c)
+target_link_libraries(Thread -lpthread)
+
+add_executable(Typedef Typedef.c)

@@ -5,17 +5,23 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 #define PORT 9090
 #define BUFFER 2000
 
 void *readMessage(void *);
+char username[50];
 
 int main(int argc , char *argv[]) {
     struct sockaddr_in server;
     char message[BUFFER];
     int clientSocket;
     pthread_t thread;
+
+    for (int i = 0; i < BUFFER; ++i) {
+        message[i] = 0;
+    }
 
     /// Socket erstellen
     clientSocket = socket(AF_INET , SOCK_STREAM , 0);
@@ -31,11 +37,24 @@ int main(int argc , char *argv[]) {
 
 
     /// Verbindung zum Server aufbauen
-    if (connect(clientSocket , (struct sockaddr *)&server , sizeof(server)) < 0) {
+    if (connect(clientSocket, (struct sockaddr *)&server , sizeof(server)) < 0) {
         perror("Verbindung zum Server fehlgeschlagen!");
         return 1;
     }
 
+
+    /// Benutzername für den Chat
+    printf("Username: ");
+    fgets(username, sizeof(username), stdin);
+
+    for (int j = 0; j < sizeof(username); ++j) {
+        if (username[j] == '\n'){
+            username[j] = '\0';
+            break;
+        }
+    }
+
+    write(clientSocket, username, sizeof(username));
 
     /// Thread für's lesen von Nachrichten erstellen
     pthread_create(&thread, NULL, readMessage, (void *) clientSocket);
@@ -43,35 +62,32 @@ int main(int argc , char *argv[]) {
 
     /// Chat
     while (1){
-        printf("Message: ");
         fgets(message, sizeof(message), stdin);
 
-        /// Fehler bei der Ausgabe am Server beheben
-        for (int i = 0; i < BUFFER; ++i) {
-            if (message[i] == '\n'){
-                message[i] = '\0';
+        for (int j = 0; j < BUFFER; ++j) {
+            if (message[j] == '\n'){
+                message[j] = '\0';
                 break;
             }
         }
-        write(clientSocket, message, strlen(message));
 
-        /// Message leeren
-        for (int i = 0; i < BUFFER; ++i) {
-            message[i] = 0;
-        }
+        char myMessage[BUFFER];
+        strcat(myMessage, username);
+        strcat(myMessage, ": ");
+        strcat(myMessage, message);
+
+        printf("MyMessage: %s\n", myMessage);
+
+        write(clientSocket, myMessage, sizeof(myMessage));
+
+        /// Programm, Thread und Socket schließen/beenden
         if (strcmp(message, "exit") == 0){
-            puts("Beenden!");
-            break;
+            pthread_join(thread, NULL);
+            close(clientSocket);
+            puts("Verbindung zum Server wurde beendet!");
+            return 0;
         }
     }
-
-    /// Thread, sowie Sockets schließen
-
-    // TODO: Client wird nicht richtig beendet
-    pthread_join(thread, NULL);
-    close(clientSocket);
-    puts("Client erfolgreich beendet");
-    return 0;
 }
 
 void *readMessage(void *clientSocket){
@@ -81,25 +97,11 @@ void *readMessage(void *clientSocket){
     while (1){
         read(socket, nachricht, sizeof(nachricht));
 
-        /// Fehler bei der Ausgabe am Server beheben
-        for (int i = 0; i < BUFFER; ++i) {
-            if (nachricht[i] == '\n'){
-                nachricht[i] = '\0';
-                break;
-            }
+        if (strncmp(nachricht, "exit", 4) == 0){
+            close(socket);
+            pthread_exit(NULL);
         }
 
-        if (strcmp(nachricht, "exit") == 0){
-            break;
-        }
-        printf("\nServer: %s\n", nachricht);
-
-        /// Message leeren
-        for (int i = 0; i < BUFFER; ++i) {
-            nachricht[i] = 0;
-        }
+        puts(nachricht);
     }
-
-    close(socket);
-    pthread_exit(NULL);
 }
