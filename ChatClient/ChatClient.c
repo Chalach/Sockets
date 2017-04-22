@@ -5,7 +5,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <stdlib.h>
 
 #define PORT 8080
 #define BUFFER 2000
@@ -18,10 +17,6 @@ int main(int argc , char *argv[]) {
     char message[BUFFER];
     int clientSocket;
     pthread_t thread;
-
-    for (int i = 0; i < BUFFER; ++i) {
-        message[i] = NULL;
-    }
 
     /// Socket erstellen
     clientSocket = socket(AF_INET , SOCK_STREAM , 0);
@@ -37,66 +32,57 @@ int main(int argc , char *argv[]) {
 
 
     /// Verbindung zum Server aufbauen
-    if (connect(clientSocket, (struct sockaddr *)&server , sizeof(server)) < 0) {
+    if (connect(clientSocket, (struct sockaddr *)&server, sizeof(server)) < 0) {
         perror("Verbindung zum Server fehlgeschlagen!");
         return 1;
     }
 
-
-    /// Benutzername für den Chat
     printf("Username: ");
-    fgets(username, sizeof(username), stdin);
+    scanf("%s", username);
+    fflush(stdin);
 
-    for (int j = 0; j < sizeof(username); ++j) {
-        if (username[j] == '\n'){
-            username[j] = '\0';
-            break;
-        }
-    }
-
-    write(clientSocket, username, sizeof(username));
+    write(clientSocket, username, strlen(username));
 
     /// Thread für's lesen von Nachrichten erstellen
     pthread_create(&thread, NULL, readMessage, (void *) clientSocket);
 
 
+    char myMessage[BUFFER];
     /// Chat
     while (1){
-        fgets(message, sizeof(message), stdin);
+        scanf("%s", message);
+        fflush(stdin);
 
         for (int j = 0; j < BUFFER; ++j) {
             if (message[j] == '\n'){
                 message[j] = '\0';
-                break;
             }
         }
 
-        char myMessage[BUFFER];
+        for (int i = 0; i < BUFFER; ++i) {
+            myMessage[i] = 0;
+        }
+
         strcat(myMessage, username);
         strcat(myMessage, ": ");
         strcat(myMessage, message);
 
-        write(clientSocket, myMessage, sizeof(myMessage));
+        write(clientSocket, myMessage, strlen(myMessage));
 
-        /// Programm, Thread und Socket schließen/beenden
         if (strcmp(message, "exit") == 0){
             pthread_join(thread, NULL);
             close(clientSocket);
-            puts("Verbindung zum Server wurde beendet!");
+            printf("Verbindung zum Server wurde beendet!");
             return 0;
-        }
-
-        for (int i = 0; i < BUFFER; ++i) {
-            myMessage[i] = NULL;
         }
     }
 }
 
 void *readMessage(void *clientSocket){
     int socket = (int) clientSocket;
+    char nachricht[BUFFER];
 
     while (1){
-        char nachricht[BUFFER];
         read(socket, nachricht, sizeof(nachricht));
 
         if (strstr(nachricht, "exit")){
@@ -105,9 +91,5 @@ void *readMessage(void *clientSocket){
         }
 
         puts(nachricht);
-
-        for (int i = 0; i < BUFFER; ++i) {
-            nachricht[i] = NULL;
-        }
     }
 }

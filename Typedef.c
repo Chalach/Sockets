@@ -22,5 +22,10 @@ int main(int argc , char *argv[]) {
         printf("Username: %i\n", client.socket[j]);
     }
 
+    char name[20];
+    printf("Name: ");
+    scanf("%s", name);
+    printf(name);
+
     return 0;
 }
