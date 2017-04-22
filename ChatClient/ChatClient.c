@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#define PORT 9090
+#define PORT 8080
 #define BUFFER 2000
 
 void *readMessage(void *);
@@ -20,7 +20,7 @@ int main(int argc , char *argv[]) {
     pthread_t thread;
 
     for (int i = 0; i < BUFFER; ++i) {
-        message[i] = 0;
+        message[i] = NULL;
     }
 
     /// Socket erstellen
@@ -76,8 +76,6 @@ int main(int argc , char *argv[]) {
         strcat(myMessage, ": ");
         strcat(myMessage, message);
 
-        printf("MyMessage: %s\n", myMessage);
-
         write(clientSocket, myMessage, sizeof(myMessage));
 
         /// Programm, Thread und Socket schließen/beenden
@@ -87,21 +85,29 @@ int main(int argc , char *argv[]) {
             puts("Verbindung zum Server wurde beendet!");
             return 0;
         }
+
+        for (int i = 0; i < BUFFER; ++i) {
+            myMessage[i] = NULL;
+        }
     }
 }
 
 void *readMessage(void *clientSocket){
     int socket = (int) clientSocket;
-    char nachricht[BUFFER];
 
     while (1){
+        char nachricht[BUFFER];
         read(socket, nachricht, sizeof(nachricht));
 
-        if (strncmp(nachricht, "exit", 4) == 0){
+        if (strstr(nachricht, "exit")){
             close(socket);
             pthread_exit(NULL);
         }
 
         puts(nachricht);
+
+        for (int i = 0; i < BUFFER; ++i) {
+            nachricht[i] = NULL;
+        }
     }
 }

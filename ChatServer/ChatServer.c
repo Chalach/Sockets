@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#define PORT 9090
+#define PORT 8080
 #define BUFFER 2000
 #define MAX_CLIENTS 16
 
@@ -21,6 +21,7 @@ typedef struct {
 
 Client clientConfig;
 int clientCount = 0;
+int clientSockets[MAX_CLIENTS];
 
 // TODO: Username mit Client schicken
 
@@ -64,22 +65,23 @@ int main(int argc, char *argv[]){
     puts("Warten auf Verbindungen...");
     for (int i = 0; i < MAX_CLIENTS; i++) {
         c = sizeof(struct sockaddr_in);
-        clientConfig.clientSockets[i] = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c);
+        //clientConfig.clientSockets[i] = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c);
+        clientSockets[i] = accept(serverSocket, (struct sockaddr *)&client, (socklen_t*)&c);
 
-        if (clientConfig.clientSockets[i] < 0) {
+        if (clientSockets[i] < 0) {
             perror("Anfrage verweigert!");
             break;
         }
 
         char username[50];
-        read(clientConfig.clientSockets[i], username, sizeof(username));
+        read(clientSockets[i], username, sizeof(username));
 
         char* usr = username;
         clientConfig.usernames[i] = usr;
 
         clientCount++;
-//        puts(clientCount);
-        pthread_create(&threads[i], NULL, readSingleMessage, (void *) clientConfig.clientSockets[i]);
+
+        pthread_create(&threads[i], NULL, readSingleMessage, (void *) clientSockets[i]);
         printf("%s hat sich angemeldet.\n", username);
     }
 
@@ -101,19 +103,17 @@ void *readSingleMessage(void *clientSocket){
     int socket = (int) clientSocket;
     char message[BUFFER];
 
-    int myClient = clientCount;
+    //int myClient = clientCount;
 
     while (1){
         read(socket, message, sizeof(message));
-        if (strcmp(message, "exit") == 0){
+        if (strstr(message, "exit")){
             puts("Verbindung beenden...");
             write(socket, "exit", 4);
             close(socket);
-            printf("Verbindung zu %s wurde getrennt!\n", clientConfig.usernames[myClient]);
+            printf("Verbindung zu %s wurde getrennt!\n", clientConfig.usernames[0]);
             pthread_exit(NULL);
         }
-
-        printf("%s: ", clientConfig.usernames[myClient]);
         puts(message);
         writeMessages(socket, message);
     }
@@ -121,15 +121,17 @@ void *readSingleMessage(void *clientSocket){
 
 ///Nachricht an alle Clients schicken
 void writeMessages(int socket, char message[]){
+    for (int i = 0; i < clientSockets[i] != NULL; ++i) {
+        for (int j = 0; j < BUFFER; ++j) {
+            if (message[j] == '\n'){
+                message[j] = '\0';
+                break;
+            }
+        }
 
-    for (int i = 0; i < clientConfig.clientSockets[i] != NULL; ++i) {
-        if (clientConfig.clientSockets[i] != socket){ /// -> Nachricht soll nicht mehr an den Eingehenden geschickt werden
-            write(clientConfig.clientSockets[i] , message, sizeof(message));
+        if (clientSockets[i] != socket){ /// -> Nachricht soll nicht mehr an den Eingehenden geschickt werden
+            write(clientSockets[i] , message, sizeof(message));
             printf("Nachricht an %s geschrieben!\n", clientConfig.usernames[i]);
         }
-    }
-
-    for (int j = 0; j < BUFFER; ++j) {
-        message[j] = 0;
     }
 }
